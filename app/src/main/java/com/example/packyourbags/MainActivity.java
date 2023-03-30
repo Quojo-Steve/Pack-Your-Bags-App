@@ -4,11 +4,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.widget.Toast;
 
 import com.example.packyourbags.Adapter.Adapter;
 import com.example.packyourbags.Constants.MyConstants;
+import com.example.packyourbags.Data.AppData;
+import com.example.packyourbags.Database.RoomDB;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     List<String> titles;
     List<Integer> images;
     Adapter adapter;
+    RoomDB database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
 
         addAddTitles();
         addAllImages();
+        persistAppData();
+        database = RoomDB.getInstance(this);
+        System.out.println(database.mainDao().getAllSelected(false).get(0).getItemname());
 
 //        issues maybe
         adapter = new Adapter(this, titles, images,MainActivity.this);
@@ -50,6 +58,25 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "Tap back button in order to exit", Toast.LENGTH_SHORT).show();
         }
         mBackPressed = System.currentTimeMillis();
+    }
+
+    private void persistAppData(){
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        SharedPreferences.Editor editor = prefs.edit();
+
+        database = RoomDB.getInstance(this);
+        AppData appData = new AppData(database);
+        int last = prefs.getInt(AppData.LAST_VERSION, 0);
+        if (!prefs.getBoolean(MyConstants.FIRST_TIME_CAMEL_CASE, false)){
+            appData.persistAllData();
+            editor.putBoolean(MyConstants.FIRST_TIME_CAMEL_CASE, true);
+            editor.commit();
+        } else if (last < AppData.NEW_VERSION) {
+            database.mainDao().deleteAllSystemItems(MyConstants.SYSTEM_SMALL);
+            appData.persistAllData();
+            editor.putInt(AppData.LAST_VERSION, AppData.NEW_VERSION);
+            editor.commit();
+        }
     }
 
     private void addAddTitles(){

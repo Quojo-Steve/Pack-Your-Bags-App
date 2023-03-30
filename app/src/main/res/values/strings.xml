@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">Pack Your Bags</string>
+    <string name="app_name" translatable="false">Travel Buddy</string>
+    <string name="title" translatable="false">Travel Buddy</string>
 </resources>
